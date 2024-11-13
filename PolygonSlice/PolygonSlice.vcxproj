@@ -18,19 +18,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\PolygonSlice\fragment.glsl" />
-    <None Include="..\PolygonSlice\vertex.glsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\PolygonSlice\소스.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\PolygonSlice\Filetobuf.h" />
-    <ClInclude Include="..\PolygonSlice\randomcolor.h" />
-    <ClInclude Include="..\PolygonSlice\Shader.h" />
-    <ClInclude Include="..\PolygonSlice\Shape.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -141,6 +128,17 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="소스.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fragment.glsl" />
+    <None Include="vertex.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Filetobuf.h" />
+    <ClInclude Include="Shader.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
