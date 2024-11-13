@@ -20,10 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragment.glsl">
+    <None Include="vertex.glsl">
       <Filter>소스 파일</Filter>
     </None>
-    <None Include="vertex.glsl">
+    <None Include="fragment.glsl">
       <Filter>소스 파일</Filter>
     </None>
   </ItemGroup>
@@ -32,6 +32,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="randomcolor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

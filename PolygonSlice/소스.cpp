@@ -15,9 +15,6 @@
 
 using namespace std;
 
-random_device rd;
-mt19937 gen(rd());
-
 GLuint vao, vbo[2], ebo;
 void convertXY(int x, int y, float& fx, float& fy);
 void UpdateBuffer();
@@ -31,10 +28,30 @@ GLvoid Timer(int value);
 float bGCr = 1.0, bGCg = 1.0, bGCb = 1.0;
 GLuint shaderPID;
 
-static const int index = 10;
+static const int index = 12;
+
+Shape line;
+Shape polygon;
+Shape sliced_polygon[10];
+bool drag = false;
+
+uniform_int_distribution<int> randpoly(3, 4);
+
+void CreatePolygon()
+{
+	switch (randpoly(gen))
+	{
+	case 3:
+		break;
+	default:
+		break;
+	}
+}
 
 void InitializeData()
 {
+	glm::vec3 temp[2] = { glm::vec3(0.0f) };
+	line = Shape(2, temp, glm::vec3(0.0f));
 }
 
 void main(int argc, char** argv)
@@ -75,6 +92,9 @@ GLvoid drawScene()
 	UpdateBuffer();
 	glBindVertexArray(vao);
 
+	if(drag)
+		line.Draw(11, GL_LINES);
+
 	glutSwapBuffers();
 }
 
@@ -106,6 +126,17 @@ GLvoid Mouse(int button, int state, int x, int y)
 	float fx = 0.0, fy = 0.0;
 	convertXY(x, y, fx, fy);
 
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		drag = true;
+
+		line.shapecoord[0] = glm::vec3(fx, fy, 0);
+		line.shapecoord[1] = glm::vec3(fx, fy, 0);
+	}
+	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+	{
+		drag = false;
+	}
 }
 
 GLvoid Timer(int value)
@@ -119,6 +150,11 @@ void Motion(int x, int y)
 {
 	float fx = 0.0, fy = 0.0;
 	convertXY(x, y, fx, fy);
+
+	if (drag)
+	{
+		line.shapecoord[1] = glm::vec3(fx, fy, 0);
+	}
 
 	glutPostRedisplay();
 }
@@ -161,6 +197,24 @@ void InitBuffer()
 
 void UpdateBuffer()
 {
+	for (int i = 0; i < 10; i++)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferSubData(GL_ARRAY_BUFFER, i * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(sliced_polygon[i].shapecoord[0]));
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferSubData(GL_ARRAY_BUFFER, i * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(sliced_polygon[i].shapecolor[0]));
+	}
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 10 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecoord[0]));
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 10 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecolor[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 11 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecoord[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 11 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecolor[0]));
+
 }

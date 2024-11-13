@@ -2,7 +2,7 @@
 #include <glm/glm/glm.hpp>
 #include "randomcolor.h"
 
-static const int MAX_POINTS = 500;  // 변경 가능한 최대 점 수
+static const int MAX_POINTS = 20;  // 변경 가능한 최대 점 수
 
 class Shape
 {
