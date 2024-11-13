@@ -29,29 +29,66 @@ float bGCr = 1.0, bGCg = 1.0, bGCb = 1.0;
 GLuint shaderPID;
 
 static const int index = 12;
+static const float polysize = 0.25f;
+static const float gravity = -0.001f;
 
 Shape line;
 Shape polygon;
 Shape sliced_polygon[10];
+int polygontype;
 bool drag = false;
 
-uniform_int_distribution<int> randpoly(3, 4);
+uniform_int_distribution<int> randtype(3, 4);
 
 void CreatePolygon()
 {
-	switch (randpoly(gen))
+	glm::vec3 coord[MAX_POINTS];
+	polygontype = randtype(gen);
+
+	switch (polygontype)
 	{
 	case 3:
+		coord[0] = glm::vec3(-polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[1] = glm::vec3(0, -polysize / 2.0f, 0);
+		coord[2] = glm::vec3(0, polysize / 2.0f, 0);
+
+		coord[3] = glm::vec3(0, -polysize / 2.0f, 0);
+		coord[4] = glm::vec3(polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[5] = glm::vec3(0, polysize / 2.0f, 0);
+		polygon = Shape(6, coord);
+		break;
+	case 4:
+		coord[0] = glm::vec3(-polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[1] = glm::vec3(polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[2] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
+
+		coord[3] = glm::vec3(-polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[4] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
+		coord[5] = glm::vec3(-polysize / 2.0f, polysize / 2.0f, 0);
+		polygon = Shape(6, coord);
 		break;
 	default:
+		exit(1557);
 		break;
 	}
+	
+	if (polygon.speedX > 0.0f)
+	{
+		polygon.translation = glm::vec3(-1.0f - polysize, 1.0f - polysize, 0.0f);
+	}
+	else if (polygon.speedX < 0.0f)
+	{
+		polygon.translation = glm::vec3(1.0f - polysize, 1.0f - polysize, 0.0f);
+	}
+	else
+		CreatePolygon();
 }
 
 void InitializeData()
 {
 	glm::vec3 temp[2] = { glm::vec3(0.0f) };
 	line = Shape(2, temp, glm::vec3(0.0f));
+	CreatePolygon();
 }
 
 void main(int argc, char** argv)
@@ -89,8 +126,21 @@ GLvoid drawScene()
 	glClearColor(bGCr, bGCg, bGCb, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
-	UpdateBuffer();
 	glBindVertexArray(vao);
+	glm::mat4 axesTransform = glm::mat4(1.0f);
+	GLuint transformLoc = glGetUniformLocation(shaderProgramID, "modelTransform");
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, polygon.translation);
+	model = glm::rotate(model, polygon.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, polygon.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, polygon.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, polygon.scaling);
+
+	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+	UpdateBuffer();
+	polygon.Draw(10, GL_TRIANGLES);
 
 	if(drag)
 		line.Draw(11, GL_LINES);
@@ -141,6 +191,9 @@ GLvoid Mouse(int button, int state, int x, int y)
 
 GLvoid Timer(int value)
 {
+	polygon.MovebyTime(gravity);
+	if (polygon.Top() < -1.0f)
+		CreatePolygon();
 
 	glutPostRedisplay();
 	glutTimerFunc(1000 / FPS, Timer, 1);

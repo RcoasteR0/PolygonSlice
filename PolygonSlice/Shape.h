@@ -4,6 +4,9 @@
 
 static const int MAX_POINTS = 20;  // 변경 가능한 최대 점 수
 
+uniform_real_distribution<float> randspeedX(-0.1f, 0.1f);
+uniform_real_distribution<float> randspeedY(0.0f, 0.1f);
+
 class Shape
 {
 public:
@@ -13,6 +16,8 @@ public:
 	glm::vec3 rotation;
 	glm::vec3 revolution;
 	glm::vec3 scaling;
+	float l, b, r, t;
+	float speedX, speedY;
 	int points;
 
 	Shape()
@@ -30,6 +35,8 @@ public:
 		rotation = glm::vec3(0.0);
 		revolution = glm::vec3(0.0);
 		scaling = glm::vec3(0.0);
+		l = FLT_MAX; b = FLT_MAX; r = FLT_MIN; t = FLT_MIN;
+		speedX = 0.0f; speedY = 0.0f;
 		points = 0;
 	}
 
@@ -45,11 +52,21 @@ public:
 		{
 			shapecoord[i] = coord[i];
 			shapecolor[i] = color;
+
+			if (coord[i].x < l)
+				l = coord[i].x;
+			if (coord[i].x > r)
+				r = coord[i].x;
+			if (coord[i].y < b)
+				b = coord[i].x;
+			if (coord[i].y > t)
+				t = coord[i].x;
 		}
 		translation = glm::vec3(0.0);
 		rotation = glm::vec3(0.0);
 		revolution = glm::vec3(0.0);
 		scaling = glm::vec3(1.0);
+		speedX = randspeedX(gen); speedY = randspeedX(gen);
 		points = state;
 	}
 
@@ -60,45 +77,42 @@ public:
 
 		for (int i = 0; i < state; ++i)
 		{
-			shapecoord[i].x = 0.0f;
-			shapecoord[i].y = 0.0f;
-			shapecoord[i].z = 0.0f;
-			shapecolor[i].r = 0.0f;
-			shapecolor[i].g = 0.0f;
-			shapecolor[i].b = 0.0f;
 			shapecoord[i] = coord[i];
 			shapecolor[i] = color;
+
+			if (coord[i].x < l)
+				l = coord[i].x;
+			if (coord[i].x > r)
+				r = coord[i].x;
+			if (coord[i].y < b)
+				b = coord[i].x;
+			if (coord[i].y > t)
+				t = coord[i].x;
 		}
 		translation = glm::vec3(0.0);
 		rotation = glm::vec3(0.0);
 		revolution = glm::vec3(0.0);
 		scaling = glm::vec3(1.0);
+		speedX = randspeedX(gen); speedY = randspeedX(gen);
 		points = state;
 	}
 
 	~Shape() {}
 
-	void Draw(int i, GLenum mode = GL_TRIANGLE_FAN)
+	float Left() { return l * scaling.x + translation.x; }
+	float Bottom() { return b * scaling.y + translation.y; }
+	float Right() { return r * scaling.x + translation.x; }
+	float Top() { return t * scaling.y + translation.y; }
+
+	void MovebyTime(float gravity)
+	{
+		translation.x += speedX;
+		translation.y += speedY;
+		speedY += gravity;
+	}
+
+	void Draw(int i, GLenum mode = GL_TRIANGLE_STRIP)
 	{
 		glDrawArrays(mode, i * MAX_POINTS, points);
-	}
-	
-	void DrawLineStrip(int i)
-	{
-		glDrawArrays(GL_LINE_STRIP, i * MAX_POINTS, points);
-	}
-
-	void DrawCylinder(int i)
-	{
-		int baseVertexCount = points / 3;
-
-		// 하단 밑면
-		glDrawArrays(GL_TRIANGLE_FAN, i * MAX_POINTS, baseVertexCount);
-
-		// 상단 밑면
-		glDrawArrays(GL_TRIANGLE_FAN, i * MAX_POINTS + baseVertexCount, baseVertexCount);
-
-		// 측면
-		glDrawArrays(GL_TRIANGLE_STRIP, i * MAX_POINTS + 2 * baseVertexCount, points - 2 * baseVertexCount);
 	}
 };
