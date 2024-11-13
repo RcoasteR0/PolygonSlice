@@ -4,8 +4,8 @@
 
 static const int MAX_POINTS = 20;  // 변경 가능한 최대 점 수
 
-uniform_real_distribution<float> randspeedX(-0.1f, 0.1f);
-uniform_real_distribution<float> randspeedY(0.0f, 0.1f);
+uniform_real_distribution<float> randspeedX(-0.035f, 0.035f);
+uniform_real_distribution<float> randspeedY(0.0f, 0.004f);
 
 class Shape
 {

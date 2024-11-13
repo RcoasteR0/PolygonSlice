@@ -39,6 +39,7 @@ int polygontype;
 bool drag = false;
 
 uniform_int_distribution<int> randtype(3, 4);
+uniform_real_distribution<float> randY(0.0f, 0.5f);
 
 void CreatePolygon()
 {
@@ -72,13 +73,13 @@ void CreatePolygon()
 		break;
 	}
 	
-	if (polygon.speedX > 0.0f)
+	if (polygon.speedX >= 0.015f)
 	{
-		polygon.translation = glm::vec3(-1.0f - polysize, 1.0f - polysize, 0.0f);
+		polygon.translation = glm::vec3(-1.0f - polysize, 1.0f - polysize - randY(gen), 0.0f);
 	}
-	else if (polygon.speedX < 0.0f)
+	else if (polygon.speedX <= -0.015f)
 	{
-		polygon.translation = glm::vec3(1.0f - polysize, 1.0f - polysize, 0.0f);
+		polygon.translation = glm::vec3(1.0f + polysize, 1.0f - polysize - randY(gen), 0.0f);
 	}
 	else
 		CreatePolygon();
@@ -130,6 +131,8 @@ GLvoid drawScene()
 	glm::mat4 axesTransform = glm::mat4(1.0f);
 	GLuint transformLoc = glGetUniformLocation(shaderProgramID, "modelTransform");
 
+	UpdateBuffer();
+
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, polygon.translation);
 	model = glm::rotate(model, polygon.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -139,11 +142,14 @@ GLvoid drawScene()
 
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-	UpdateBuffer();
 	polygon.Draw(10, GL_TRIANGLES);
 
-	if(drag)
+	if (drag)
+	{
+		model = glm::mat4(1.0f);
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 		line.Draw(11, GL_LINES);
+	}
 
 	glutSwapBuffers();
 }
@@ -192,7 +198,7 @@ GLvoid Mouse(int button, int state, int x, int y)
 GLvoid Timer(int value)
 {
 	polygon.MovebyTime(gravity);
-	if (polygon.Top() < -1.0f)
+	if (polygon.Top() < -1.0f || polygon.speedX > 0 && polygon.Left() > 1.0f || polygon.speedX < 0 && polygon.Right() < -1.0f)
 		CreatePolygon();
 
 	glutPostRedisplay();
@@ -211,6 +217,8 @@ void Motion(int x, int y)
 
 	glutPostRedisplay();
 }
+
+
 
 void InitBuffer()
 {
