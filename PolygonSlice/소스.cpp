@@ -192,6 +192,15 @@ GLvoid Mouse(int button, int state, int x, int y)
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
 	{
 		drag = false;
+
+		if ((line.shapecoord[0].x >= line.shapecoord[1].x && polygon.Left() <= line.shapecoord[0].x && polygon.Right() >= line.shapecoord[1].x
+				|| line.shapecoord[1].x >= line.shapecoord[0].x && polygon.Left() <= line.shapecoord[1].x && polygon.Right() >= line.shapecoord[0].x)
+			&&
+			(line.shapecoord[0].y >= line.shapecoord[1].y && polygon.Bottom() <= line.shapecoord[0].y && polygon.Top() >= line.shapecoord[1].y
+				|| line.shapecoord[1].y >= line.shapecoord[0].y && polygon.Bottom() <= line.shapecoord[1].y && polygon.Top() >= line.shapecoord[0].y))
+		{
+			CreatePolygon();
+		}
 	}
 }
 
