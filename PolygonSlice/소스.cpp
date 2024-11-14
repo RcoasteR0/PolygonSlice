@@ -30,11 +30,11 @@ GLuint shaderPID;
 
 static const int index = 12;
 static const float polysize = 0.25f;
-static const float gravity = -0.001f;
 
 Shape line;
 Shape polygon;
 Shape sliced_polygon[10];
+int sliced_count;
 int polygontype;
 bool drag = false;
 
@@ -60,12 +60,12 @@ void CreatePolygon()
 		break;
 	case 4:
 		coord[0] = glm::vec3(-polysize / 2.0f, -polysize / 2.0f, 0);
-		coord[1] = glm::vec3(polysize / 2.0f, -polysize / 2.0f, 0);
-		coord[2] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
+		coord[1] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
+		coord[2] = glm::vec3(-polysize / 2.0f, polysize / 2.0f, 0);
 
 		coord[3] = glm::vec3(-polysize / 2.0f, -polysize / 2.0f, 0);
-		coord[4] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
-		coord[5] = glm::vec3(-polysize / 2.0f, polysize / 2.0f, 0);
+		coord[4] = glm::vec3(polysize / 2.0f, -polysize / 2.0f, 0);
+		coord[5] = glm::vec3(polysize / 2.0f, polysize / 2.0f, 0);
 		polygon = Shape(6, coord);
 		break;
 	default:
@@ -85,11 +85,70 @@ void CreatePolygon()
 		CreatePolygon();
 }
 
+void DeletePolygon(int index)
+{
+	for (int i = index; i < sliced_count; ++i)
+	{
+		sliced_polygon[i] = sliced_polygon[i + 1];
+	}
+	--sliced_count;
+}
+
+void DivinePolygon()
+{
+	glm::vec3 coord[3];
+
+	switch (polygontype)
+	{
+	case 3:
+		coord[0] = polygon.shapecoord[0];
+		coord[1] = polygon.shapecoord[1];
+		coord[2] = polygon.shapecoord[2];
+		sliced_polygon[sliced_count] = Shape(3, coord, polygon.shapecolor[0]);
+		sliced_polygon[sliced_count].translation = polygon.translation;
+		sliced_polygon[sliced_count].speedX = -glm::abs(polygon.speedX);
+		sliced_polygon[sliced_count].speedY = 0;
+		++sliced_count;
+
+		coord[0] = polygon.shapecoord[3];
+		coord[1] = polygon.shapecoord[4];
+		coord[2] = polygon.shapecoord[5];
+		sliced_polygon[sliced_count] = Shape(3, coord, polygon.shapecolor[0]);
+		sliced_polygon[sliced_count].translation = polygon.translation;
+		sliced_polygon[sliced_count].speedX = glm::abs(polygon.speedX);
+		sliced_polygon[sliced_count].speedY = 0;
+		++sliced_count;
+		break;
+	case 4:
+		coord[0] = polygon.shapecoord[0];
+		coord[1] = polygon.shapecoord[1];
+		coord[2] = polygon.shapecoord[2];
+		sliced_polygon[sliced_count] = Shape(3, coord, polygon.shapecolor[0]);
+		sliced_polygon[sliced_count].translation = polygon.translation;
+		sliced_polygon[sliced_count].speedX = -glm::abs(polygon.speedX);
+		sliced_polygon[sliced_count].speedY = 0;
+		++sliced_count;
+
+		coord[0] = polygon.shapecoord[3];
+		coord[1] = polygon.shapecoord[4];
+		coord[2] = polygon.shapecoord[5];
+		sliced_polygon[sliced_count] = Shape(3, coord, polygon.shapecolor[0]);
+		sliced_polygon[sliced_count].translation = polygon.translation;
+		sliced_polygon[sliced_count].speedX = glm::abs(polygon.speedX);
+		sliced_polygon[sliced_count].speedY = 0;
+		++sliced_count;
+		break;
+	default:
+		break;
+	}
+}
+
 void InitializeData()
 {
 	glm::vec3 temp[2] = { glm::vec3(0.0f) };
 	line = Shape(2, temp, glm::vec3(0.0f));
 	CreatePolygon();
+	sliced_count = 0;
 }
 
 void main(int argc, char** argv)
@@ -134,14 +193,26 @@ GLvoid drawScene()
 	UpdateBuffer();
 
 	glm::mat4 model = glm::mat4(1.0f);
+
+	for (int i = 0; i < sliced_count; ++i)
+	{
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, sliced_polygon[i].translation);
+		model = glm::rotate(model, sliced_polygon[i].rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, sliced_polygon[i].rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, sliced_polygon[i].rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, sliced_polygon[i].scaling);
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
+		sliced_polygon[i].Draw(i);
+	}
+
+	model = glm::mat4(1.0f);
 	model = glm::translate(model, polygon.translation);
 	model = glm::rotate(model, polygon.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, polygon.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(model, polygon.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 	model = glm::scale(model, polygon.scaling);
-
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
-
 	polygon.Draw(10, GL_TRIANGLES);
 
 	if (drag)
@@ -199,6 +270,7 @@ GLvoid Mouse(int button, int state, int x, int y)
 			(line.shapecoord[0].y >= line.shapecoord[1].y && polygon.Bottom() <= line.shapecoord[0].y && polygon.Top() >= line.shapecoord[1].y
 				|| line.shapecoord[1].y >= line.shapecoord[0].y && polygon.Bottom() <= line.shapecoord[1].y && polygon.Top() >= line.shapecoord[0].y))
 		{
+			DivinePolygon();
 			CreatePolygon();
 		}
 	}
@@ -206,9 +278,16 @@ GLvoid Mouse(int button, int state, int x, int y)
 
 GLvoid Timer(int value)
 {
-	polygon.MovebyTime(gravity);
+	polygon.MovebyTime();
 	if (polygon.Top() < -1.0f || polygon.speedX > 0 && polygon.Left() > 1.0f || polygon.speedX < 0 && polygon.Right() < -1.0f)
 		CreatePolygon();
+
+	for (int i = 0; i < sliced_count; ++i)
+	{
+		sliced_polygon[i].MovebyTime();
+		if (sliced_polygon[i].Top() < -1.0f || sliced_polygon[i].speedX > 0 && sliced_polygon[i].Left() > 1.0f || sliced_polygon[i].speedX < 0 && sliced_polygon[i].Right() < -1.0f)
+			DeletePolygon(i--);
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(1000 / FPS, Timer, 1);

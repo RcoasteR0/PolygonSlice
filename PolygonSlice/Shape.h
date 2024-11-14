@@ -4,6 +4,7 @@
 
 static const int MAX_POINTS = 20;  // 변경 가능한 최대 점 수
 
+static const float gravity = -0.001f;
 uniform_real_distribution<float> randspeedX(-0.035f, 0.035f);
 uniform_real_distribution<float> randspeedY(0.0f, 0.004f);
 
@@ -104,7 +105,7 @@ public:
 	float Right() { return r * scaling.x + translation.x; }
 	float Top() { return t * scaling.y + translation.y; }
 
-	void MovebyTime(float gravity)
+	void MovebyTime()
 	{
 		translation.x += speedX;
 		translation.y += speedY;
