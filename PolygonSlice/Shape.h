@@ -50,6 +50,7 @@ public:
 
 		glm::vec3 color;
 		RandomColor(color.r, color.g, color.b);
+		l = FLT_MAX; b = FLT_MAX; r = FLT_MIN; t = FLT_MIN;
 
 		for (int i = 0; i < state; ++i)
 		{
@@ -78,6 +79,8 @@ public:
 		if (state > MAX_POINTS)
 			exit(6974);
 
+		l = FLT_MAX; b = FLT_MAX; r = FLT_MIN; t = FLT_MIN;
+
 		for (int i = 0; i < state; ++i)
 		{
 			shapecoord[i] = coord[i];
@@ -88,9 +91,9 @@ public:
 			if (coord[i].x > r)
 				r = coord[i].x;
 			if (coord[i].y < b)
-				b = coord[i].x;
+				b = coord[i].y;
 			if (coord[i].y > t)
-				t = coord[i].x;
+				t = coord[i].y;
 		}
 		translation = glm::vec3(0.0);
 		rotation = glm::vec3(0.0);

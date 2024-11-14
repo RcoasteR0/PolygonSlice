@@ -35,6 +35,7 @@ Shape line;
 Shape polygon;
 Shape basket;
 Shape sliced_polygon[10];
+float basketmove;
 int sliced_count;
 int polygontype;
 GLenum drawmode = GL_FILL;
@@ -149,8 +150,20 @@ void InitializeData()
 {
 	glm::vec3 temp[2] = { glm::vec3(0.0f) };
 	line = Shape(2, temp, glm::vec3(0.0f));
+
+	glm::vec3 temp2[4];
+	float basketW = 0.2f;
+	float basketH = 0.05f;
+	temp2[0] = glm::vec3(-basketW, -basketH, 0);
+	temp2[1] = glm::vec3(basketW, -basketH, 0);
+	temp2[2] = glm::vec3(basketW, basketH, 0);
+	temp2[3] = glm::vec3(-basketW, basketH, 0);
+	basket = Shape(4, temp2, glm::vec3(1.0f, 0.0f, 0.0f));
+	basket.translation = glm::vec3(0.0f, -0.8f, 0.0f);
+
 	CreatePolygon();
 	sliced_count = 0;
+	basketmove = 0.01f;
 }
 
 void main(int argc, char** argv)
@@ -189,7 +202,6 @@ GLvoid drawScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
-	glm::mat4 axesTransform = glm::mat4(1.0f);
 	GLuint transformLoc = glGetUniformLocation(shaderProgramID, "modelTransform");
 
 	UpdateBuffer();
@@ -208,6 +220,15 @@ GLvoid drawScene()
 		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 		sliced_polygon[i].Draw(i);
 	}
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, basket.translation);
+	model = glm::rotate(model, basket.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, basket.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, basket.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, basket.scaling);
+	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
+	basket.Draw(12, GL_TRIANGLE_FAN);
 
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, polygon.translation);
@@ -303,6 +324,10 @@ GLvoid Timer(int value)
 	if (polygon.Top() < -1.0f || polygon.speedX > 0 && polygon.Left() > 1.0f || polygon.speedX < 0 && polygon.Right() < -1.0f)
 		CreatePolygon();
 
+	basket.translation.x += basketmove * gamespeed;
+	if (basketmove > 0.0f && basket.Right() >= 1.0f || basketmove < 0.0f && basket.Left() <= -1.0f)
+		basketmove *= -1.0f;
+
 	for (int i = 0; i < sliced_count; ++i)
 	{
 		sliced_polygon[i].MovebyTime();
@@ -386,5 +411,11 @@ void UpdateBuffer()
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 	glBufferSubData(GL_ARRAY_BUFFER, 11 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecolor[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 12 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecoord[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 12 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecolor[0]));
 
 }
