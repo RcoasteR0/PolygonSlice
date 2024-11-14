@@ -8,6 +8,8 @@ static const float gravity = -0.001f;
 uniform_real_distribution<float> randspeedX(-0.035f, 0.035f);
 uniform_real_distribution<float> randspeedY(0.0f, 0.004f);
 
+float gamespeed = 1.0f;
+
 class Shape
 {
 public:
@@ -67,7 +69,7 @@ public:
 		rotation = glm::vec3(0.0);
 		revolution = glm::vec3(0.0);
 		scaling = glm::vec3(1.0);
-		speedX = randspeedX(gen); speedY = randspeedX(gen);
+		speedX = randspeedX(gen) * gamespeed; speedY = randspeedX(gen) * gamespeed;
 		points = state;
 	}
 
@@ -94,7 +96,7 @@ public:
 		rotation = glm::vec3(0.0);
 		revolution = glm::vec3(0.0);
 		scaling = glm::vec3(1.0);
-		speedX = randspeedX(gen); speedY = randspeedX(gen);
+		speedX = randspeedX(gen) * gamespeed; speedY = randspeedX(gen) * gamespeed;
 		points = state;
 	}
 
@@ -109,7 +111,7 @@ public:
 	{
 		translation.x += speedX;
 		translation.y += speedY;
-		speedY += gravity;
+		speedY += gravity * gamespeed;
 	}
 
 	void Draw(int i, GLenum mode = GL_TRIANGLE_STRIP)

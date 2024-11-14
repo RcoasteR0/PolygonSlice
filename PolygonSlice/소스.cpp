@@ -25,17 +25,19 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid Motion(int x, int y);
 GLvoid Timer(int value);
 
-float bGCr = 1.0, bGCg = 1.0, bGCb = 1.0;
+float bGCr = 0.0, bGCg = 1.0, bGCb = 1.0;
 GLuint shaderPID;
 
-static const int index = 12;
+static const int index = 13;
 static const float polysize = 0.25f;
 
 Shape line;
 Shape polygon;
+Shape basket;
 Shape sliced_polygon[10];
 int sliced_count;
 int polygontype;
+GLenum drawmode = GL_FILL;
 bool drag = false;
 
 uniform_int_distribution<int> randtype(3, 4);
@@ -73,11 +75,11 @@ void CreatePolygon()
 		break;
 	}
 	
-	if (polygon.speedX >= 0.015f)
+	if (polygon.speedX >= 0.015f * gamespeed)
 	{
 		polygon.translation = glm::vec3(-1.0f - polysize, 1.0f - polysize - randY(gen), 0.0f);
 	}
-	else if (polygon.speedX <= -0.015f)
+	else if (polygon.speedX <= -0.015f * gamespeed)
 	{
 		polygon.translation = glm::vec3(1.0f + polysize, 1.0f - polysize - randY(gen), 0.0f);
 	}
@@ -193,6 +195,7 @@ GLvoid drawScene()
 	UpdateBuffer();
 
 	glm::mat4 model = glm::mat4(1.0f);
+	glPolygonMode(GL_FRONT_AND_BACK, drawmode);
 
 	for (int i = 0; i < sliced_count; ++i)
 	{
@@ -240,7 +243,25 @@ void convertXY(int x, int y, float& fx, float& fy)
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
-
+	switch (key)
+	{
+	case 'l':
+		drawmode = GL_LINE;
+		break;
+	case 'f':
+		drawmode = GL_FILL;
+		break;
+	case '+':
+		if(gamespeed > 2.0f)
+			gamespeed += 0.1f;
+		break;
+	case '-':
+		if(gamespeed > 0.1f)
+			gamespeed -= 0.1f;
+		break;
+	default:
+		break;
+	}
 
 	if(key == 'q')
 		glutLeaveMainLoop();
