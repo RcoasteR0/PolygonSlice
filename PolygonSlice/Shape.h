@@ -119,6 +119,16 @@ public:
 
 	void Draw(int i, GLenum mode = GL_TRIANGLE_STRIP)
 	{
+		glm::mat4 model = glm::mat4(1.0f);
+		GLuint transformLoc = glGetUniformLocation(shaderProgramID, "modelTransform");
+
+		model = glm::translate(model, translation);
+		model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, scaling);
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
+
 		glDrawArrays(mode, i * MAX_POINTS, points);
 	}
 };

@@ -202,47 +202,22 @@ GLvoid drawScene()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(vao);
-	GLuint transformLoc = glGetUniformLocation(shaderProgramID, "modelTransform");
 
 	UpdateBuffer();
 
-	glm::mat4 model = glm::mat4(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, drawmode);
 
 	for (int i = 0; i < sliced_count; ++i)
 	{
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, sliced_polygon[i].translation);
-		model = glm::rotate(model, sliced_polygon[i].rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, sliced_polygon[i].rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, sliced_polygon[i].rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, sliced_polygon[i].scaling);
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 		sliced_polygon[i].Draw(i);
 	}
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, basket.translation);
-	model = glm::rotate(model, basket.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, basket.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::rotate(model, basket.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, basket.scaling);
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 	basket.Draw(12, GL_TRIANGLE_FAN);
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, polygon.translation);
-	model = glm::rotate(model, polygon.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, polygon.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::rotate(model, polygon.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, polygon.scaling);
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 	polygon.Draw(10, GL_TRIANGLES);
 
 	if (drag)
 	{
-		model = glm::mat4(1.0f);
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(model));
 		line.Draw(11, GL_LINES);
 	}
 
