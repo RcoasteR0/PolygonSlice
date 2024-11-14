@@ -28,15 +28,17 @@ GLvoid Timer(int value);
 float bGCr = 0.0, bGCg = 1.0, bGCb = 1.0;
 GLuint shaderPID;
 
-static const int index = 13;
+static const int index = 23;
 static const float polysize = 0.25f;
 
 Shape line;
 Shape polygon;
 Shape basket;
 Shape sliced_polygon[10];
+Shape stored_polygon[10];
 float basketmove;
 int sliced_count;
+int stored_count;
 int polygontype;
 GLenum drawmode = GL_FILL;
 bool drag = false;
@@ -90,11 +92,26 @@ void CreatePolygon()
 
 void DeletePolygon(int index)
 {
-	for (int i = index; i < sliced_count; ++i)
+	for (int i = index; i < sliced_count - 1; ++i)
 	{
 		sliced_polygon[i] = sliced_polygon[i + 1];
 	}
-	--sliced_count;
+	sliced_polygon[--sliced_count] = Shape();
+}
+
+void StorePolygon(int index)
+{
+	if (stored_count >= 10)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			stored_polygon[i] = stored_polygon[i + 1];
+		}
+		--stored_count;
+	}
+
+	stored_polygon[stored_count++] = sliced_polygon[index];
+	DeletePolygon(index);
 }
 
 void DivinePolygon()
@@ -163,6 +180,7 @@ void InitializeData()
 
 	CreatePolygon();
 	sliced_count = 0;
+	stored_count = 0;
 	basketmove = 0.01f;
 }
 
@@ -212,13 +230,18 @@ GLvoid drawScene()
 		sliced_polygon[i].Draw(i);
 	}
 
-	basket.Draw(12, GL_TRIANGLE_FAN);
+	for (int i = 0; i < stored_count; ++i)
+	{
+		stored_polygon[i].Draw(10 + i);
+	}
 
-	polygon.Draw(10, GL_TRIANGLES);
+	basket.Draw(22, GL_TRIANGLE_FAN);
+
+	polygon.Draw(20, GL_TRIANGLES);
 
 	if (drag)
 	{
-		line.Draw(11, GL_LINES);
+		line.Draw(21, GL_LINES);
 	}
 
 	glutSwapBuffers();
@@ -300,6 +323,8 @@ GLvoid Timer(int value)
 		CreatePolygon();
 
 	basket.translation.x += basketmove * gamespeed;
+	for (int i = 0; i < stored_count; ++i)
+		stored_polygon[i].translation.x += basketmove * gamespeed;
 	if (basketmove > 0.0f && basket.Right() >= 1.0f || basketmove < 0.0f && basket.Left() <= -1.0f)
 		basketmove *= -1.0f;
 
@@ -308,6 +333,9 @@ GLvoid Timer(int value)
 		sliced_polygon[i].MovebyTime();
 		if (sliced_polygon[i].Top() < -1.0f || sliced_polygon[i].speedX > 0 && sliced_polygon[i].Left() > 1.0f || sliced_polygon[i].speedX < 0 && sliced_polygon[i].Right() < -1.0f)
 			DeletePolygon(i--);
+		else if (sliced_polygon[i].Left() <= basket.Right() && sliced_polygon[i].Right() >= basket.Left()
+			&& sliced_polygon[i].Bottom() <= basket.Top() && sliced_polygon[i].Top() >= basket.Bottom())
+			StorePolygon(i--);
 	}
 
 	glutPostRedisplay();
@@ -375,22 +403,32 @@ void UpdateBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 		glBufferSubData(GL_ARRAY_BUFFER, i * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(sliced_polygon[i].shapecolor[0]));
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferSubData(GL_ARRAY_BUFFER, 10 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecoord[0]));
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferSubData(GL_ARRAY_BUFFER, 10 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecolor[0]));
+	for (int i = 0; i < 10; i++)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferSubData(GL_ARRAY_BUFFER, (10 + i) * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(stored_polygon[i].shapecoord[0]));
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferSubData(GL_ARRAY_BUFFER, 11 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecoord[0]));
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferSubData(GL_ARRAY_BUFFER, 11 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecolor[0]));
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferSubData(GL_ARRAY_BUFFER, (10 + i) * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(stored_polygon[i].shapecolor[0]));
+	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferSubData(GL_ARRAY_BUFFER, 12 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecoord[0]));
+	glBufferSubData(GL_ARRAY_BUFFER, 20 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecoord[0]));
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferSubData(GL_ARRAY_BUFFER, 12 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecolor[0]));
+	glBufferSubData(GL_ARRAY_BUFFER, 20 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(polygon.shapecolor[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 21 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecoord[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 21 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(line.shapecolor[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 22 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecoord[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 22 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecolor[0]));
 
 }
