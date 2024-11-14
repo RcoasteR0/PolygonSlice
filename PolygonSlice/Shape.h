@@ -2,7 +2,7 @@
 #include <glm/glm/glm.hpp>
 #include "randomcolor.h"
 
-static const int MAX_POINTS = 20;  // 변경 가능한 최대 점 수
+static const int MAX_POINTS = 100;  // 변경 가능한 최대 점 수
 
 static const float gravity = -0.001f;
 uniform_int_distribution<int> randdir(0, 1);

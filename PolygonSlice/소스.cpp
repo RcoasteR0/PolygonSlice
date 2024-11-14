@@ -28,12 +28,13 @@ GLvoid Timer(int value);
 float bGCr = 0.0, bGCg = 1.0, bGCb = 1.0;
 GLuint shaderPID;
 
-static const int index = 23;
+static const int index = 24;
 static const float polysize = 0.25f;
 
 Shape line;
 Shape polygon;
 Shape basket;
+Shape route;
 Shape sliced_polygon[10];
 Shape stored_polygon[10];
 float basketmove;
@@ -42,9 +43,25 @@ int stored_count;
 int polygontype;
 GLenum drawmode = GL_FILL;
 bool drag = false;
+bool showroute = false;
 
 uniform_int_distribution<int> randtype(3, 4);
 uniform_real_distribution<float> randY(0.0f, 0.5f);
+
+void CreateRoute()
+{
+	glm::vec3 coord[MAX_POINTS];
+	float x = polygon.translation.x;
+	float y = polygon.translation.y;
+	for (int i = 0; i < MAX_POINTS; ++i)
+	{
+		coord[i] = glm::vec3(x, y, 0);
+		x += polygon.speedX;
+		y += polygon.speedY + gravity * i;
+	}
+
+	route = Shape(MAX_POINTS, coord, glm::vec3(1.0f, 0.0f, 1.0f));
+}
 
 void CreatePolygon()
 {
@@ -87,7 +104,9 @@ void CreatePolygon()
 		polygon.translation = glm::vec3(1.0f + polysize, 1.0f - polysize - randY(gen), 0.0f);
 	}
 	else
-		CreatePolygon();
+		exit(523);
+
+	CreateRoute();
 }
 
 void DeletePolygon(int index)
@@ -240,9 +259,10 @@ GLvoid drawScene()
 	polygon.Draw(20, GL_TRIANGLES);
 
 	if (drag)
-	{
 		line.Draw(21, GL_LINES);
-	}
+
+	if (showroute)
+		route.Draw(23, GL_LINE_STRIP);
 
 	glutSwapBuffers();
 }
@@ -269,6 +289,12 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		break;
 	case 'f':
 		drawmode = GL_FILL;
+		break;
+	case 'r':
+		showroute = true;
+		break;
+	case 'R':
+		showroute = false;
 		break;
 	case '+':
 		if(gamespeed > 2.0f)
@@ -430,5 +456,11 @@ void UpdateBuffer()
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 	glBufferSubData(GL_ARRAY_BUFFER, 22 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(basket.shapecolor[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, 23 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(route.shapecoord[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+	glBufferSubData(GL_ARRAY_BUFFER, 23 * MAX_POINTS * 3 * sizeof(GLfloat), MAX_POINTS * 3 * sizeof(GLfloat), glm::value_ptr(route.shapecolor[0]));
 
 }
